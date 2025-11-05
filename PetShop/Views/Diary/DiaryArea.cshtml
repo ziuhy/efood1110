@@ -354,6 +354,7 @@
             <label for="diaryContent">✎ 新增飲食紀錄:</label>
 
             <form id="dateForm" method="post" action="/Home/DiaryArea">
+                @Html.AntiForgeryToken()
                 <label for="DiaryDate">飲食時間：</label>
                 <input type="datetime-local" id="selectedDateTime" name="selectedDateTime"
                        value="@ViewBag.DiaryDate" />
@@ -384,35 +385,35 @@
                 <br />
 
                 @*<select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
-                        <option value="">-- 請選擇食物 --</option>
-                        @if (commonFoods != null)
+            <option value="">-- 請選擇食物 --</option>
+            @if (commonFoods != null)
+            {
+                var groupedCommon = commonFoods.GroupBy(f => f.Category);
+                foreach (var group in groupedCommon)
+                {
+                    <optgroup label="@group.Key">
+                        @foreach (var common in group)
                         {
-                            var groupedCommon = commonFoods.GroupBy(f => f.Category);
-                            foreach (var group in groupedCommon)
-                            {
-                                <optgroup label="@group.Key">
-                                    @foreach (var common in group)
-                                    {
-                                        <option value="@common.Name"
-                                                data-calories="@common.Calories"
-                                                data-protein="@common.Protein"
-                                                data-fat="@common.Fat"
-                                                data-carb="@common.Carbs">
-                                            @common.Name
-                                        </option>
-                                    }
-                                </optgroup>
-                            }
+                            <option value="@common.Name"
+                                    data-calories="@common.Calories"
+                                    data-protein="@common.Protein"
+                                    data-fat="@common.Fat"
+                                    data-carb="@common.Carbs">
+                                @common.Name
+                            </option>
                         }
-                        <option value="其他" @(isOther ? "selected" : "")>其他</option>
-                    </select>
-                    <br />
-                    <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
-                           style="display:none;" placeholder="請輸入食物名稱" />*@
+                    </optgroup>
+                }
+            }
+            <option value="其他" @(isOther ? "selected" : "")>其他</option>
+        </select>
+        <br />
+        <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
+               style="display:none;" placeholder="請輸入食物名稱" />*@
                 @*<div>
-                    <label>數量</label>
-                    <input type="number" id="qtyInput" name="Quantity" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
-                </div>*@
+            <label>數量</label>
+            <input type="number" id="qtyInput" name="Quantity" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
+        </div>*@
                 <div id="nutritionInputs" class="mt-2">
                     <label>熱量</label>
                     <input type="number" id="caloriesInput" name="Calories" class="form-control d-inline-block" style="width:100px;" value="0" step="0.1">
@@ -428,7 +429,7 @@
                 </div>
                 <br />
                 <input type="hidden" id="categoryInput" name="Category" value="" />
-                <button type="submit" class="btn btn-primary mt-2">➕ 儲存日記</button>
+                <button type="submit" id="saveBtn" class="btn btn-primary mt-2">➕ 儲存日記</button>
             </form>
         </div>
     </div>
@@ -578,6 +579,59 @@ allFoods.push({
 </script>
 
 <script>
+    function hasSelectedFood() {
+        const foods = document.getElementById('selectedFoods').value?.trim(); // "雞胸肉:1,地瓜:2"
+        return !!foods;
+    }
+
+    function validateDiaryForm() {
+        const meal = document.getElementById('MealType').value?.trim();
+        const ok = meal && hasSelectedFood();
+        if (!ok) {
+            let msg = [];
+            if (!meal) msg.push("請選擇餐別");
+            if (!hasSelectedFood()) msg.push("請至少選擇一項食物");
+            alert(msg.join("\n"));
+        }
+        return ok;
+    }
+
+    function toggleSubmit() {
+        const meal = document.getElementById('MealType').value?.trim();
+        const ok = meal && hasSelectedFood();
+        const btn = document.getElementById('saveBtn');
+        if (btn) btn.disabled = !ok;
+    }
+
+    // 綁定表單 submit
+    (function () {
+        const form = document.getElementById('dateForm');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            if (!validateDiaryForm()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        // 監聽餐別改變就更新按鈕狀態
+        const meal = document.getElementById('MealType');
+        if (meal) meal.addEventListener('change', toggleSubmit);
+
+        // 讓 chip 增減後也會更新按鈕狀態
+        const _renderChipList = renderChipList;
+        renderChipList = function () {
+            _renderChipList();
+            toggleSubmit();
+        };
+        const _updateNutritionSum = updateNutritionSum;
+        updateNutritionSum = function () {
+            _updateNutritionSum();
+            toggleSubmit();
+        };
+
+        document.addEventListener('DOMContentLoaded', toggleSubmit);
+    })();
     //function onCommonSelectChange() {
     //    var commonSelect = document.getElementById('commonSelect');
     //    var foodOtherInput = document.getElementById('foodOtherInput');

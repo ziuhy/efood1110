@@ -377,7 +377,9 @@ namespace PetShop.Controllers
             Session["LoginUser"] = null;
             return View("~/Views/Home/LoginRegister.cshtml");
         }
+
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult DiaryArea()
         {
             string Category = Request["Category"]?.ToString();
@@ -391,6 +393,18 @@ namespace PetShop.Controllers
             decimal.TryParse(Request["Protein"], out singleProtein);
             decimal.TryParse(Request["Fat"], out singleFat);
             decimal.TryParse(Request["Carbs"], out singleCarbs);
+            // 新增防呆限制條件
+            if (string.IsNullOrWhiteSpace(MealType))
+            {
+                TempData["Msg"] = "請選擇餐別";
+                return RedirectToAction("DiaryIndex");
+            }
+
+            if (string.IsNullOrWhiteSpace(commonFoodField))
+            {
+                TempData["Msg"] = "請至少選擇一項食物";
+                return RedirectToAction("DiaryIndex");
+            }
 
             DateTime createTime = DateTime.Now;
             if (!string.IsNullOrEmpty(Request["selectedDateTime"]))
@@ -1080,6 +1094,37 @@ namespace PetShop.Controllers
                 X.Close();
             }
 
+            // 如果沒有在 Objectives 設定 dailyCalories，使用會員身高/體重計算預設值（BMR x 活動係數 1.55）
+            if (dailyCalories <= 0 && member != null)
+            {
+                try
+                {
+                    // 計算年齡（若生日為 yyyyMMdd）
+                    int age = 30;
+                    if (!string.IsNullOrEmpty(member.RegisterBirthday) && member.RegisterBirthday.Length == 8)
+                    {
+                        if (DateTime.TryParseExact(member.RegisterBirthday, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime bd))
+                        {
+                            age = DateTime.Now.Year - bd.Year;
+                            if (DateTime.Now < bd.AddYears(age)) age--;
+                        }
+                    }
+
+                    double heightCm = member.RegisterHeight; // cm
+                    double weightKg = member.RegisterWeight; // kg
+                    if (heightCm > 0 && weightKg > 0)
+                    {
+                        double bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+                        double estimatedDaily = Math.Round(bmr * 1.55, 0); // 活動係數可依需求調整
+                        dailyCalories = Convert.ToDecimal(estimatedDaily);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("計算預設每日熱量失敗：" + ex.Message);
+                }
+            }
+
             // 計算熱量差距並推薦食物
             decimal calorieDiff = (decimal)dailyCalories - totalCalories;
             List<CommonFood> recommendFoods = new List<CommonFood>();
@@ -1403,6 +1448,7 @@ namespace PetShop.Controllers
 
             return View("~/Views/Diary/MealArea.cshtml");
         }
+
         public ActionResult Index()
         {
             ViewBag.Account = Session["LoginUser"];
