@@ -4,7 +4,6 @@
     //var selectedDate = ViewBag.SelectedDate as string;
     var foodList = ViewBag.FoodList as List<PetShop.Models.Food>;
     var commonFoods = ViewBag.CommonFoods as List<PetShop.Models.CommonFood>;
-    bool isOther = false;
     string selectedDate = Request.QueryString["date"];
 
     // Diary 預設為現在的日期時間
@@ -98,8 +97,6 @@
     <div class="container mt-5" style="flex: 1 1 50%; max-width: 50%;">
         <form method="get" action="/Home/DiaryIndex" class="mb-3">
             <label for="searchDate">🔍 選擇日期查看紀錄：</label>
-            @*<input type="date" id="searchDate" name="date" class="form-control"
-                value="@Request.QueryString["date"]" onchange="this.form.submit()" />*@
             <input type="date" id="searchDate" name="date" class="form-control"
                    value="@diaryDate" onchange="this.form.submit()" />
 
@@ -116,36 +113,6 @@
                 <text>所有日記紀錄：</text>
             }
         </h4>
-        @*<div class="diary-list-wrapper">
-                @if (entries != null && entries.Count > 0)
-                {
-                    <ul class="list-group">
-                        @foreach (var entry in entries)
-                        {
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">@entry.CreateTime.ToString("yyyy-MM-dd HH:mm")</span>
-                                    <span class="badge badge-secondary">日記</span>
-                                </div>
-                                <div class="mt-2">
-                                    @if (!string.IsNullOrWhiteSpace(entry.Food))
-                                    {
-                                        <div><strong>食物：</strong>@entry.Food (@entry.Quantity 份)</div>
-                                        <div><strong>餐別：</strong>@entry.MealType</div>
-                                        <div><strong>熱量：</strong>@entry.Calories kcal</div>
-                                    }
-                                </div>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
-                                <a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="alert alert-secondary">尚無日記紀錄。</div>
-                }
-            </div>*@
         <div class="diary-list-wrapper">
             @if (entries != null && entries.Count > 0)
             {
@@ -183,7 +150,6 @@
                                     <div class="meal-actions">
                                         <button type="button" class="btn btn-warning btn-sm" onclick="location.href='@Url.Action("EditDiary", "Home", new { id = entry.Id })'">修改</button>
                                         <button type="button" class="btn btn-danger btn-sm" onclick="deleteDiary(@entry.Id, this)">刪除</button>
-                                        @*<a href="@Url.Action("EditDiary", "Home", new { id = entry.Id })" class="btn btn-warning btn-sm">修改</a>*@
                                     </div>
                                 </div>
                             }
@@ -384,36 +350,6 @@
                 </div>
                 <br />
 
-                @*<select id="commonSelect" name="CommonFood" onchange="onCommonSelectChange()">
-            <option value="">-- 請選擇食物 --</option>
-            @if (commonFoods != null)
-            {
-                var groupedCommon = commonFoods.GroupBy(f => f.Category);
-                foreach (var group in groupedCommon)
-                {
-                    <optgroup label="@group.Key">
-                        @foreach (var common in group)
-                        {
-                            <option value="@common.Name"
-                                    data-calories="@common.Calories"
-                                    data-protein="@common.Protein"
-                                    data-fat="@common.Fat"
-                                    data-carb="@common.Carbs">
-                                @common.Name
-                            </option>
-                        }
-                    </optgroup>
-                }
-            }
-            <option value="其他" @(isOther ? "selected" : "")>其他</option>
-        </select>
-        <br />
-        <input type="text" id="foodOtherInput" name="FoodOther" class="form-control mt-2"
-               style="display:none;" placeholder="請輸入食物名稱" />*@
-                @*<div>
-            <label>數量</label>
-            <input type="number" id="qtyInput" name="Quantity" class="form-control d-inline-block" value="1" min="1" style="width:80px;" onchange="updateNutrition()">
-        </div>*@
                 <div id="nutritionInputs" class="mt-2">
                     <label>熱量</label>
                     <input type="number" id="caloriesInput" name="Calories" class="form-control d-inline-block" style="width:100px;" value="0" step="0.1">
@@ -575,7 +511,6 @@ allFoods.push({
         if (hidden) hidden.value = selectedChipFoods.map(f => f.name + ":" + (f.qty || 1)).join(',');
     }
 
-/*    document.getElementById('qtyInput').addEventListener('change', updateNutritionSum);*/
 </script>
 
 <script>
@@ -632,33 +567,6 @@ allFoods.push({
 
         document.addEventListener('DOMContentLoaded', toggleSubmit);
     })();
-    //function onCommonSelectChange() {
-    //    var commonSelect = document.getElementById('commonSelect');
-    //    var foodOtherInput = document.getElementById('foodOtherInput');
-    //    var selected = commonSelect.options[commonSelect.selectedIndex];
-    //    if (commonSelect.value === "其他") {
-    //        foodOtherInput.style.display = '';
-    //        foodOtherInput.required = true;
-    //    } else {
-    //        foodOtherInput.style.display = 'none';
-    //        foodOtherInput.required = false;
-    //    }
-    //}
-
-    //document.getElementById('commonSelect').addEventListener('change', function () {
-    //    var selected = this.options[this.selectedIndex];
-    //    var category = selected.parentElement.label;
-    //    var calories = selected.getAttribute('data-calories');
-    //    var protein = selected.getAttribute('data-protein');
-    //    var fat = selected.getAttribute('data-fat');
-    //    var carb = selected.getAttribute('data-carb');
-    //    if (calories && calories !== "其他") {
-    //        document.getElementById('caloriesInput').value = calories;
-    //        document.getElementById('proteinInput').value = protein;
-    //        document.getElementById('fatInput').value = fat;
-    //        document.getElementById('carbInput').value = carb;
-    //    }
-    //});
 
     function deleteDiary(id, btn) {
         console.log("前端傳入的 id:", id);
@@ -748,31 +656,4 @@ allFoods.push({
             applyInferredMeal();
         });
     })();
-
-    //function updateNutrition() {
-    //    // 取得選擇的食材
-    //    var select = document.getElementById('commonSelect');
-    //    var qty = parseInt(document.getElementById('qtyInput').value) || 1;
-    //    var selected = select.options[select.selectedIndex];
-
-    //    var calories = parseFloat(selected.getAttribute('data-calories')) || 0;
-    //    var protein = parseFloat(selected.getAttribute('data-protein')) || 0;
-    //    var fat = parseFloat(selected.getAttribute('data-fat')) || 0;
-    //    var carb = parseFloat(selected.getAttribute('data-carb')) || 0;
-
-    //    // 乘上數量
-    //    document.getElementById('caloriesInput').value = calories * qty;
-    //    document.getElementById('proteinInput').value = protein * qty;
-    //    document.getElementById('fatInput').value = fat * qty;
-    //    document.getElementById('carbInput').value = carb * qty;
-
-    //    // 若要送到後端，可將結果填入隱藏欄位
-    //    document.getElementById('caloriesInput').value = totalCalories;
-    //    // 其他營養成分也可用隱藏欄位傳送
-    //}
-
-    //// 初始化
-    //document.getElementById('commonSelect').addEventListener('change', updateNutritionInputs);
-    //document.getElementById('qtyInput').addEventListener('change', updateNutritionInputs);
-
 </script>

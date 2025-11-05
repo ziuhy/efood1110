@@ -8,7 +8,7 @@ namespace PetShop.Models
         [Key]
         [Required]
         public string Account { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
         public string RealName { get; set; }
         public string Phone { get; set; }
         public float Weight { get; set; }

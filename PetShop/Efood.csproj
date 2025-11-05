@@ -165,6 +165,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\PasswordHelper.cs" />
     <Compile Include="Models\CommonFood.cs" />
     <Compile Include="Models\DbContext.cs" />
     <Compile Include="Models\DiaryEntry.cs" />
@@ -260,6 +261,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Photo\" />
+    <Folder Include="Views\PasswordHelper\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

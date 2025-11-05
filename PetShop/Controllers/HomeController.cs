@@ -50,7 +50,7 @@ namespace PetShop.Controllers
                     string[] allowedExtensions = { ".jpg" };
                     if (!allowedExtensions.Contains(extension))
                     {
-                        TempData["Note"] = "只允許 JPG";
+                        TempData["Tips"] = "只允許 JPG";
                         return RedirectToAction("MemberInfo");
                     }
 
@@ -61,7 +61,7 @@ namespace PetShop.Controllers
                 }
                 catch (Exception ex)
                 {
-                    TempData["Note"] = "圖片上傳失敗：" + ex.Message;
+                    TempData["Tips"] = "圖片上傳失敗：" + ex.Message;
                     return RedirectToAction("MemberInfo");
                 }
             }
@@ -90,12 +90,12 @@ namespace PetShop.Controllers
                 Session["ImageName"] = imagename;
                 Session["RealName"] = model.RegisterRealName;
 
-                TempData["Note"] = "會員資料更新成功";
+                TempData["Tips"] = "會員資料更新成功";
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("更新錯誤：" + ex.Message);
-                TempData["Note"] = "更新失敗：" + ex.Message;
+                TempData["Tips"] = "更新失敗：" + ex.Message;
             }
             finally
             {
@@ -155,23 +155,30 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-                string G = "INSERT INTO [Member](Account, Password,RealName,Phone,Weight,Height,BirthDay,ImageName) VALUES(@Account,@Password,@RealName,@Phone,@Weight,@Height,@BirthDay,@ImageName)";
-                Debug.WriteLine(G);
+
+                // 加密密碼
+                string hashedPassword = PasswordHelper.HashPassword(pwd);
+
+                string G = @"INSERT INTO [Member]
+                     (Account, PasswordHash, RealName, Phone, Weight, Height, BirthDay, ImageName) 
+                     VALUES (@Account, @PasswordHash, @RealName, @Phone, @Weight, @Height, @BirthDay, @ImageName)";
+
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@Account", user);
-                Q.Parameters.AddWithValue("@Password", pwd);
+                Q.Parameters.AddWithValue("@PasswordHash", hashedPassword);  // 改用 PasswordHash
                 Q.Parameters.AddWithValue("@RealName", realname);
                 Q.Parameters.AddWithValue("@Phone", phone);
                 Q.Parameters.AddWithValue("@Weight", weight);
                 Q.Parameters.AddWithValue("@Height", height);
                 Q.Parameters.AddWithValue("@BirthDay", birthday);
                 Q.Parameters.AddWithValue("@ImageName", imagename);
+
                 Q.ExecuteNonQuery();
-                Response = "註冊成功-" + Result2;
+                Response = "註冊成功";
             }
             catch (Exception ex)
             {
-                Response = "開檔失敗" + ex.Message;
+                Response = "註冊失敗：" + ex.Message;
             }
             finally
             {
@@ -185,30 +192,19 @@ namespace PetShop.Controllers
             try
             {
                 X.Open();
-
-                string G = "Select * from [Member] where Account=@User";
-
+                string G = "SELECT PasswordHash FROM [Member] WHERE Account = @User";
                 SqlCommand Q = new SqlCommand(G, X);
                 Q.Parameters.AddWithValue("@User", user);
-                Q.ExecuteNonQuery();
+                object result = Q.ExecuteScalar();
 
-                SqlDataReader R = Q.ExecuteReader();
-                if (R.Read() == true)
-                {
-                    Debug.WriteLine("AAAAA");
-                    Result = R["Password"].ToString().Trim();
-                }
+                if (result != null)
+                    Result = result.ToString();  // 回傳 Base64 雜湊
                 else
-                {
-                    Debug.WriteLine("BBBB");
                     Result = "非會員";
-                }
-
             }
             catch (Exception)
             {
-                Debug.WriteLine("CCCC");
-                Result = "開檔失敗X";
+                Result = "開檔失敗";
             }
             finally { X.Close(); }
             return Result;
@@ -265,10 +261,11 @@ namespace PetShop.Controllers
             }
             ;
 
+            // Register 方法內
             string Ans;
             if (Result == "非會員")
             {
-                Ans = AddUser(Phone, Pwd, RealName, User, W, H, BirthDay, imagename);
+                Ans = AddUser(Phone, Pwd, RealName, User, W, H, BirthDay, imagename);  // Pwd 會在 AddUser 內加密
             }
             else
             {
@@ -279,10 +276,10 @@ namespace PetShop.Controllers
         }
         public ActionResult CheckIn()
         {
-            string User = Request["Account"];
+            string User = Request["Account"]?.Trim();
             string Pwd = Request["Password"];
-            string Phone = Request["Phone"];
             string Ans;
+
             if (string.IsNullOrWhiteSpace(User))
             {
                 TempData["Note"] = "請輸入帳號";
@@ -290,20 +287,22 @@ namespace PetShop.Controllers
                 return View("~/Views/Home/LoginRegister.cshtml");
             }
 
-            string CorrectPwd = FindUser(User.Trim());
-            if (CorrectPwd == "非會員")
+            string hashedPassword = FindUser(User);  // 取得加密後的密碼
+
+            if (hashedPassword == "非會員")
             {
                 Ans = "查無此人";
             }
             else
             {
-                if (CorrectPwd != Pwd)
+                // 使用 PasswordHelper 驗證
+                if (!PasswordHelper.VerifyPassword(Pwd, hashedPassword))
                 {
                     Ans = "密碼錯誤";
                 }
                 else
                 {
-                    // 登入成功，取會員資料
+                    // 登入成功 → 讀取會員資料
                     Models.RegisterUser member = null;
                     try
                     {
@@ -327,40 +326,23 @@ namespace PetShop.Controllers
                         }
                         reader.Close();
                     }
-                    finally
-                    {
-                        X.Close();
-                    }
+                    finally { X.Close(); }
 
                     ViewBag.Account = User;
                     Session["LoginUser"] = User;
-
-                    if (member != null)
-                    {
-                        Session["RealName"] = member.RegisterRealName;
-                        ViewBag.ImageName = member.ImageName;
-                        Session["ImageName"] = member.ImageName;
-                    }
-                    else
-                    {
-                        Ans = "查無會員資料";
-                        TempData["Note"] = Ans + " | " + Result2;
-                        TempData["Choice"] = "One";
-                        return View("~/Views/Home/LoginRegister.cshtml");
-                    }
+                    ViewBag.RealName = member?.RegisterRealName;
+                    Session["RealName"] = member?.RegisterRealName;
+                    ViewBag.ImageName = member?.ImageName;
+                    Session["ImageName"] = member?.ImageName;
 
                     if (User == "Manager")
-                    {
                         return RedirectToAction("Manage", "Manager");
-                    }
                     else
-                    {
                         return View("~/Views/Home/Index.cshtml");
-                    }
                 }
-
             }
-            TempData["Note"] = Ans + " | " + Result2; ;
+
+            TempData["Note"] = Ans;
             TempData["Choice"] = "One";
             return View("~/Views/Home/LoginRegister.cshtml");
         }
@@ -1391,7 +1373,7 @@ namespace PetShop.Controllers
             ViewBag.SelectedDate = startDate.ToString("yyyy-MM-dd");
 
             return View("~/Views/Diary/Analysis3Area.cshtml");
-        }
+}
 
         public ActionResult MealIndex(string date)
         {
@@ -1490,7 +1472,7 @@ namespace PetShop.Controllers
                     user = new Member()
                     {
                         Account = reader["Account"].ToString(),
-                        Password = reader["Password"].ToString(),
+                        PasswordHash = reader["Password"].ToString(),
                         RealName = reader["RealName"].ToString(),
                         Phone = reader["Phone"].ToString(),
                         BirthDay = reader["BirthDay"].ToString(),
@@ -1641,6 +1623,7 @@ namespace PetShop.Controllers
         public ActionResult ResetPassword(string token)
         {
             Debug.WriteLine("收到的 token: " + token);
+
             if (string.IsNullOrEmpty(token))
             {
                 TempData["Note"] = "重設密碼連結無效";
@@ -1662,14 +1645,22 @@ namespace PetShop.Controllers
                     return RedirectToAction("LoginRegister");
                 }
             }
+            
+            catch (Exception ex)
+            {
+                TempData["Note"] = "驗證失敗：" + ex.Message;
+                return RedirectToAction("LoginRegister");
+            }
             finally
             {
                 X.Close();
             }
 
+            // 傳 token 給 View，讓表單提交時帶回來
             ViewBag.Token = token;
-            return View();
+            return View();  // 顯示 ResetPassword.cshtml
         }
+
         [HttpPost]
         public ActionResult ResetPassword(string token, string newPassword, string confirmPassword)
         {
@@ -1693,14 +1684,21 @@ namespace PetShop.Controllers
                 return View();
             }
 
-            // 更新密碼
+            // 加密新密碼
+            string hashedPassword = PasswordHelper.HashPassword(newPassword);
+
             try
             {
                 X.Open();
-                string sql = "UPDATE [Member] SET Password = @Password, ResetToken = NULL, ResetTokenExpire = NULL WHERE ResetToken = @Token AND ResetTokenExpire > GETDATE()";
+                string sql = @"UPDATE [Member] 
+                       SET PasswordHash = @PasswordHash, 
+                           ResetToken = NULL, 
+                           ResetTokenExpire = NULL 
+                       WHERE ResetToken = @Token AND ResetTokenExpire > GETDATE()";
                 SqlCommand cmd = new SqlCommand(sql, X);
-                cmd.Parameters.AddWithValue("@Password", newPassword);
+                cmd.Parameters.AddWithValue("@PasswordHash", hashedPassword);
                 cmd.Parameters.AddWithValue("@Token", token);
+
                 int rows = cmd.ExecuteNonQuery();
 
                 if (rows == 0)
@@ -1708,6 +1706,12 @@ namespace PetShop.Controllers
                     TempData["Note"] = "重設密碼連結無效或已過期";
                     return RedirectToAction("LoginRegister");
                 }
+            }
+            catch (Exception ex)
+            {
+                TempData["Note"] = "重設失敗：" + ex.Message;
+                ViewBag.Token = token;
+                return View();
             }
             finally
             {

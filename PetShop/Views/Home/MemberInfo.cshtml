@@ -1,6 +1,21 @@
 ﻿@model PetShop.Models.RegisterUser
 
+<style>
+    .alert {
+        color: #f9f9f9;
+        text-align: center;
+        font-size: 16px;
+        background-color: #8e8480;
+    }
+</style>
 <div class="container">
+
+    <!-- 成功/失敗訊息 -->
+    @if (TempData["Tips"] != null)
+    {
+        <div class="alert">@TempData["Tips"]</div>
+    }
+
     <h2>會員資料修改</h2>
 
     <style>
@@ -52,11 +67,12 @@
                 font-size: 14px;
                 text-align: left;
             }
-            .readonly-input {
+
+        .readonly-input {
             background-color: #f5f5f5;
             color: #333;
             cursor: not-allowed;
-            }
+        }
 
         img.profile-photo {
             width: 100px;
@@ -85,9 +101,6 @@
             .btn-primary:hover {
                 background-color: #737373;
             }
-
-        
-
     </style>
 
     @if (Model != null)
