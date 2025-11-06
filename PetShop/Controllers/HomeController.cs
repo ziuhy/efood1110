@@ -3,18 +3,13 @@ using PetShop.Models;
 using PetShop.Services; // 引用我們的服務
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.AccessControl;
-using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using System.Web.Services.Description;
-using System.Web.UI.WebControls;
 using System.Net;
 using System.Net.Mail;
 using System.Configuration;
@@ -553,6 +548,70 @@ namespace PetShop.Controllers
         //    //TempData["Msg"] = Response;
         //    return RedirectToAction("DiaryIndex");
         //}
+        // === 新增：用來接收前端新增食物的請求 ===
+        public class NewFoodRequest
+        {
+            public string Name { get; set; }       // 必填：食物名稱
+            public string Category { get; set; }   // 選填：分類
+            public decimal Calories { get; set; }  // 必填：熱量
+            public decimal Protein { get; set; }   // 必填：蛋白質
+            public decimal Fat { get; set; }       // 必填：脂肪
+            public decimal Carbs { get; set; }     // 必填：碳水
+        }
+
+        // === 新增：把新食物存進 CommonFoods（若已存在就不重複） ===
+        [HttpPost]
+        public JsonResult AddCommonFood(NewFoodRequest req)
+        {
+            if (req == null || string.IsNullOrWhiteSpace(req.Name))
+                return Json(new { success = false, message = "請輸入食物名稱。" });
+
+            if (req.Calories < 0 || req.Protein < 0 || req.Fat < 0 || req.Carbs < 0)
+                return Json(new { success = false, message = "營養素不得為負數。" });
+
+            try
+            {
+                X.Open();
+
+                // 1) 檢查是否已存在（以名稱判斷，不分大小寫）
+                string checkSql = "SELECT COUNT(1) FROM CommonFoods WHERE LOWER(Name) = LOWER(@Name)";
+                using (var check = new SqlCommand(checkSql, X))
+                {
+                    check.Parameters.AddWithValue("@Name", req.Name.Trim());
+                    int cnt = (int)check.ExecuteScalar();
+                    if (cnt > 0)
+                    {
+                        return Json(new { success = false, exists = true, message = "資料庫已存在同名食物，未重複新增。" });
+                    }
+                }
+
+                // 2) 新增
+                string insertSql = @"
+            INSERT INTO CommonFoods (Name, Category, Calories, Protein, Fat, Carbs)
+            VALUES (@Name, @Category, @Calories, @Protein, @Fat, @Carbs)";
+                using (var cmd = new SqlCommand(insertSql, X))
+                {
+                    cmd.Parameters.AddWithValue("@Name", req.Name.Trim());
+                    cmd.Parameters.AddWithValue("@Category", (object)(req.Category ?? "") ?? "");
+                    cmd.Parameters.AddWithValue("@Calories", req.Calories);
+                    cmd.Parameters.AddWithValue("@Protein", req.Protein);
+                    cmd.Parameters.AddWithValue("@Fat", req.Fat);
+                    cmd.Parameters.AddWithValue("@Carbs", req.Carbs);
+                    cmd.ExecuteNonQuery();
+                }
+
+                return Json(new { success = true, message = "已新增到資料庫（CommonFoods）。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "新增失敗：" + ex.Message });
+            }
+            finally
+            {
+                X.Close();
+            }
+        }
+
         public ActionResult DiaryIndex(string date)
         {
             DateTime selectedDate;
@@ -1373,7 +1432,7 @@ namespace PetShop.Controllers
             ViewBag.SelectedDate = startDate.ToString("yyyy-MM-dd");
 
             return View("~/Views/Diary/Analysis3Area.cshtml");
-}
+        }
 
         public ActionResult MealIndex(string date)
         {
@@ -1645,7 +1704,7 @@ namespace PetShop.Controllers
                     return RedirectToAction("LoginRegister");
                 }
             }
-            
+
             catch (Exception ex)
             {
                 TempData["Note"] = "驗證失敗：" + ex.Message;
