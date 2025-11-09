@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -8,7 +11,6 @@
 
     <style>
         html, body {
-            /*height: 100%;*/
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(to right, #f9f9f9, #e9eff5);
@@ -25,9 +27,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            //padding: 0 30px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 1000;
+            z-index: 1500; /* 提高層級確保在最上層 */
+            padding: 0 20px;
         }
 
         /* ☰ 按鈕 */
@@ -37,7 +39,8 @@
             color: #444;
             font-size: 28px;
             cursor: pointer;
-            z-index: 1001;
+            z-index: 1600; /* 確保不被擋住 */
+            position: relative;
         }
 
         /* 標題 */
@@ -70,7 +73,7 @@
                     text-decoration: underline;
                 }
 
-        /* 主內容要往下推，避免被導覽列蓋住 */
+        /* 主內容推下來避免被導覽列蓋住 */
         .main-content {
             margin-top: 90px;
             padding: 20px;
@@ -101,7 +104,7 @@
             flex-direction: column;
             transform: translateX(-230px);
             transition: transform 0.3s ease;
-            z-index: 999;
+            z-index: 1200;
         }
 
             #sidebar.open {
@@ -147,6 +150,8 @@
             font-size: 14px;
             padding: 6px 0;
             text-decoration: none;
+            display: flex;
+            align-items: center;
         }
 
             .submenu-item:hover {
@@ -168,8 +173,8 @@
             position: fixed;
             top: 15px;
             right: 100px;
-            z-index: 1001;
-            padding-right:20px;
+            z-index: 1400; /* 調整到比按鈕低一層 */
+            padding-right: 20px;
         }
 
         .profile-pic {
@@ -209,13 +214,63 @@
             .profile-tooltip a:hover {
                 text-decoration: underline;
             }
-    </style>
-    <style>
+
+        /* ===== 使用說明滑出欄 ===== */
+        .help-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.2);
+            transition: right 0.4s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .help-sidebar.open {
+                right: 0;
+            }
+
+        .help-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+
+            .help-header h3 {
+                margin: 0;
+                color: #444;
+            }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #888;
+            cursor: pointer;
+        }
+
+        .help-content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+            .help-content h4 {
+                color: #555;
+                margin-top: 18px;
+                margin-bottom: 6px;
+            }
+
+        /* 背景圖設定 */
         body {
             background: linear-gradient(rgba(249,249,249,0.7), rgba(233,239,245,0.7)), url('/Image/food2.png') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
         }
     </style>
 </head>
@@ -224,9 +279,7 @@
     <!-- 固定導覽列 -->
     <div class="navbar">
         <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-
         <header>E-食代</header>
-
         <div class="top-links">
             @if (Session["LoginUser"] == null)
             {
@@ -236,7 +289,6 @@
             {
                 @Html.ActionLink("登出", "Logout", null, new { @class = "nav-link" })
             }
-
             @Html.ActionLink("回首頁", "Index", null, new { @class = "nav-link" })
         </div>
     </div>
@@ -247,32 +299,38 @@
         <div id="sidebar">
             <div class="menu">
                 <a href="@Url.Action("DiaryIndex", "Home")" class="menu-item">
-                    <img src="~/Image/飲食紀錄icon.png" alt="">
+                    <img src="@Url.Content("~/Image/飲食紀錄icon.png")" alt="">
                     <span>飲食紀錄</span>
                 </a>
                 <a href="@Url.Action("ObjectiveIndex", "Home")" class="menu-item">
-                    <img src="~/Image/目標設定icon.png" alt="">
+                    <img src="@Url.Content("~/Image/目標設定icon.png")" alt="">
                     <span>目標設定</span>
                 </a>
 
                 <div class="menu-item parent-item" onclick="toggleSubmenu(this)">
-                    <img src="~/Image/飲食分析icon.png" alt="">
+                    <img src="@Url.Content("~/Image/飲食分析icon.png")" alt="">
                     <span>飲食分析 ▾</span>
                 </div>
 
+                <a href="#" class="menu-item" id="openHelpLink">
+                    <img src="@Url.Content("~/Image/helpicon.png")" alt="">
+                    <span>使用說明</span>
+                </a>
+
                 <div class="submenu">
                     <a href="@Url.Action("Analysis1Index", "Home")" class="submenu-item">
-                        <img src="~/Image/一周飲食統計icon.png" alt="">
+                        <img src="@Url.Content("~/Image/一周飲食統計icon.png")" alt="">
                         <span>一週飲食統計</span>
                     </a>
                     <a href="@Url.Action("Analysis2Index", "Home")" class="submenu-item">
-                        <img src="~/Image/每日熱量趨勢icon.png" alt="">
+                        <img src="@Url.Content("~/Image/每日熱量趨勢icon.png")" alt="">
                         <span>每日熱量趨勢</span>
                     </a>
                     <a href="@Url.Action("Analysis3Index", "Home")" class="submenu-item">
-                        <img src="~/Image/營養比例分析icon.png" alt="">
+                        <img src="@Url.Content("~/Image/營養比例分析icon.png")" alt="">
                         <span>營養比例分析</span>
                     </a>
+
                 </div>
             </div>
         </div>
@@ -298,15 +356,57 @@
         </div>
     }
 
+    <!-- ===== JS 控制區 ===== -->
     <script>
         function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("open");
+            const sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("open");
         }
 
         function toggleSubmenu(el) {
             const submenu = el.nextElementSibling;
             submenu.style.display = submenu.style.display === "flex" ? "none" : "flex";
         }
+
+        // 使用說明控制
+        document.addEventListener("DOMContentLoaded", function () {
+            const openHelp = document.getElementById("openHelpLink");
+            const closeHelp = document.getElementById("closeHelp");
+
+            if (openHelp) {
+                openHelp.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    document.getElementById("helpSidebar").classList.add("open");
+                });
+            }
+
+            if (closeHelp) {
+                closeHelp.addEventListener("click", function () {
+                    document.getElementById("helpSidebar").classList.remove("open");
+                });
+            }
+        });
     </script>
+
+    <!-- ===== 使用說明滑出欄 ===== -->
+    <div id="helpSidebar" class="help-sidebar">
+        <div class="help-header">
+            <h3>📘 E-食代 使用說明</h3>
+            <button id="closeHelp" class="close-btn">&times;</button>
+        </div>
+        <div class="help-content">
+            <h4>🍱 飲食紀錄</h4>
+            <p>記錄每日飲食內容、用餐時間與營養成分，可依日期查詢。</p>
+
+            <h4>🎯 目標設定</h4>
+            <p>設定目標體重與天數，系統會自動計算每日建議熱量與熱量差距。</p>
+
+            <h4>📊 飲食分析</h4>
+            <p>可查看一週飲食統計、每日熱量趨勢及營養比例分析，了解個人飲食狀況。</p>
+
+            <hr>
+            <p style="color:#555;">💡 提示：隨時可從上方導覽列返回首頁或登出。</p>
+        </div>
+    </div>
 </body>
 </html>
