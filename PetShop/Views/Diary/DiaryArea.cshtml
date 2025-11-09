@@ -365,6 +365,12 @@
                 </div>
                 <br />
                 <input type="hidden" id="categoryInput" name="Category" value="" />
+                <div id="newFoodNotice" class="alert alert-info" style="display:none;">
+                    已選擇新增：<strong id="pendingFoodName"></strong><br />
+                    請在上方輸入該食物的「熱量 / 蛋白質 / 脂肪 / 碳水」，完成後再按
+                    <button type="button" class="btn btn-sm btn-primary" onclick="confirmSaveNewFood()">💾 儲存到資料庫</button>
+                </div>
+                <br />
                 <button type="submit" id="saveBtn" class="btn btn-primary mt-2">➕ 儲存日記</button>
             </form>
         </div>
@@ -389,6 +395,87 @@ allFoods.push({
 
     var selectedChipFoods = [];
 
+    // === 新增：兩段式新增的暫存狀態 ===
+    var pendingNewFoodName = null;
+
+    // === 新增：通用 POST(JSON) ===
+    function postJSON(url, data) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(r => r.json());
+    }
+
+    // === 新增：讀下方營養素欄位 ===
+    function readNutritionInputs() {
+        var calories = parseFloat(document.getElementById('caloriesInput').value) || 0;
+        var protein = parseFloat(document.getElementById('proteinInput').value) || 0;
+        var fat = parseFloat(document.getElementById('fatInput').value) || 0;
+        var carbs = parseFloat(document.getElementById('carbInput').value) || 0;
+        var category = document.getElementById('categoryInput') ? (document.getElementById('categoryInput').value || '') : '';
+        return { calories, protein, fat, carbs, category };
+    }
+
+    // === 新增：步驟一（只「預備新增」）：讓使用者去填營養素 ===
+    function stageNewFood(name) {
+        pendingNewFoodName = (name || '').trim();
+        if (!pendingNewFoodName) { alert('請輸入食物名稱'); return; }
+
+        // 清空/保留營養素皆可；你原本就預設 0，所以不強制改動
+        // 顯示提示條與「存到資料庫」按鈕
+        var box = document.getElementById('newFoodNotice');
+        var span = document.getElementById('pendingFoodName');
+        if (span) span.textContent = pendingNewFoodName;
+        if (box) box.style.display = '';
+
+        // 清空建議清單與輸入框
+        var suggestList = document.getElementById('chipSuggestList');
+        if (suggestList) suggestList.innerHTML = '';
+        var inputEl = document.getElementById('foodChipInput');
+        if (inputEl) inputEl.value = pendingNewFoodName; // 也可清空，看你習慣
+    }
+
+    // === 新增：步驟二（真正寫庫 + 加到本次日記 chips） ===
+    function confirmSaveNewFood() {
+        if (!pendingNewFoodName) { alert('尚未選擇要新增的食物'); return; }
+
+        var { calories, protein, fat, carbs, category } = readNutritionInputs();
+        if (calories < 0 || protein < 0 || fat < 0 || carbs < 0) {
+            alert('營養素不得為負數'); return;
+        }
+
+        var payload = {
+            name: pendingNewFoodName,
+            category: category,
+            calories: calories,
+            protein: protein,
+            fat: fat,
+            carbs: carbs
+        };
+
+        postJSON('/Home/AddCommonFood', payload).then(data => {
+            if (data.success || data.exists) {
+                // 更新本地快取（exists 也補齊）
+                var existing = allFoods.find(f => f.name.toLowerCase() === pendingNewFoodName.toLowerCase());
+                var obj = { name: pendingNewFoodName, category, calories, protein, fat, carb: carbs };
+                if (!existing) allFoods.push(obj);
+
+                // 加入本次日記 chips（qty 預設 1）
+                addChipFood(Object.assign({}, obj, { qty: 1 }));
+
+                // 收尾
+                var box = document.getElementById('newFoodNotice');
+                if (box) box.style.display = 'none';
+                pendingNewFoodName = null;
+
+                alert(data.success ? '已寫入資料庫並加入此次日記。' : '資料庫已有同名食物，未重複新增；已加入此次日記。');
+            } else {
+                alert(data.message || '新增失敗');
+            }
+        }).catch(err => alert('新增失敗：' + err));
+    }
+
     //function chipSuggest() {
     //    var input = document.getElementById('foodChipInput').value.toLowerCase();
     //    var suggestList = document.getElementById('chipSuggestList');
@@ -412,7 +499,7 @@ allFoods.push({
     //    });
     //}
 
-    // === 取代：chipSuggest，若無建議則提供「新增到資料庫」按鈕 ===
+    // === 取代：chipSuggest，無建議時只「預備新增」，不立即寫庫 ===
     function chipSuggest() {
         var inputEl = document.getElementById('foodChipInput');
         var input = (inputEl.value || '').trim();
@@ -440,14 +527,14 @@ allFoods.push({
             suggestList.appendChild(item);
         });
 
-        // 沒有建議 → 顯示「新增」入口
+        // 沒有建議 → 顯示「預備新增」入口（不立即寫庫）
         if (filtered.length === 0) {
             var addItem = document.createElement('a');
             addItem.className = "list-group-item list-group-item-action";
             addItem.style.display = "block";
             addItem.style.fontWeight = "600";
-            addItem.innerHTML = "➕ 新增「" + input + "」到資料庫（使用下方營養素）";
-            addItem.onclick = function () { addNewFoodFromInputs(input); };
+            addItem.innerHTML = "➕ 新增「" + input + "」：請在下方輸入營養素";
+            addItem.onclick = function () { stageNewFood(input); };
             suggestList.appendChild(addItem);
         }
     }
@@ -696,58 +783,4 @@ allFoods.push({
             applyInferredMeal();
         });
     })();
-
-    // === 新增：通用 POST(JSON) 與「新增食物」流程 ===
-    function postJSON(url, data) {
-        return fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        }).then(r => r.json());
-    }
-
-    function readNutritionInputs() {
-        var calories = parseFloat(document.getElementById('caloriesInput').value) || 0;
-        var protein = parseFloat(document.getElementById('proteinInput').value) || 0;
-        var fat = parseFloat(document.getElementById('fatInput').value) || 0;
-        var carbs = parseFloat(document.getElementById('carbInput').value) || 0;
-        var category = document.getElementById('categoryInput') ? (document.getElementById('categoryInput').value || '') : '';
-        return { calories, protein, fat, carbs, category };
-    }
-
-    function addNewFoodFromInputs(name) {
-        name = (name || '').trim();
-        if (!name) { alert('請輸入食物名稱'); return; }
-
-        var { calories, protein, fat, carbs, category } = readNutritionInputs();
-        if (calories < 0 || protein < 0 || fat < 0 || carbs < 0) {
-            alert('營養素不得為負數');
-            return;
-        }
-
-        var payload = { name, category, calories, protein, fat, carbs };
-
-        postJSON('/Home/AddCommonFood', payload)
-            .then(data => {
-                if (data.success) {
-                    // 更新本地快取
-                    allFoods.push({ name, category, calories, protein, fat, carb: carbs });
-                    // 同步加入 chips 區
-                    addChipFood({ name, category, calories, protein, fat, carb: carbs, qty: 1 });
-
-                    document.getElementById('foodChipInput').value = '';
-                    document.getElementById('chipSuggestList').innerHTML = '';
-                    alert('已新增到資料庫（CommonFoods），並加入此次日記項目。');
-                } else if (data.exists) {
-                    // 已存在：直接加入 chips
-                    var ex = allFoods.find(f => f.name.toLowerCase() === name.toLowerCase());
-                    if (ex) addChipFood(Object.assign({}, ex, { qty: 1 }));
-                    document.getElementById('chipSuggestList').innerHTML = '';
-                    alert('資料庫已有同名食物，未重複新增。已加入此次日記項目。');
-                } else {
-                    alert(data.message || '新增失敗');
-                }
-            })
-            .catch(err => alert('新增失敗：' + err));
-    }
 </script>
