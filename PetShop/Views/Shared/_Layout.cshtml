@@ -28,8 +28,8 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 1500; /* 提高層級確保在最上層 */
-            padding: 0 20px;
+            z-index: 1500;
+            /*padding: 0 20px;*/
         }
 
         /* ☰ 按鈕 */
@@ -39,7 +39,7 @@
             color: #444;
             font-size: 28px;
             cursor: pointer;
-            z-index: 1600; /* 確保不被擋住 */
+            z-index: 1600;
             position: relative;
         }
 
@@ -53,7 +53,7 @@
             margin: 0;
         }
 
-        /* 右上連結 */
+        /* 右上連結（僅保留回首頁） */
         .top-links {
             display: flex;
             gap: 20px;
@@ -173,7 +173,7 @@
             position: fixed;
             top: 15px;
             right: 100px;
-            z-index: 1400; /* 調整到比按鈕低一層 */
+            z-index: 2000;
             padding-right: 20px;
         }
 
@@ -183,6 +183,8 @@
             border-radius: 50%;
             object-fit: cover;
             cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
 
         .profile-tooltip {
@@ -197,7 +199,7 @@
             box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
             min-width: 140px;
             text-align: left;
-            z-index: 1000;
+            z-index: 2100;
         }
 
         .profile-container:hover .profile-tooltip {
@@ -281,15 +283,7 @@
         <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
         <header>E-食代</header>
         <div class="top-links">
-            @if (Session["LoginUser"] == null)
-            {
-                @Html.ActionLink("登入/註冊", "LeaveHome", null, new { @class = "nav-link" })
-            }
-            else
-            {
-                @Html.ActionLink("登出", "Logout", null, new { @class = "nav-link" })
-            }
-            @Html.ActionLink("回首頁", "Index", null, new { @class = "nav-link" })
+            @Html.ActionLink("回首頁    ", "Index", null, new { @class = "nav-link" })
         </div>
     </div>
 
@@ -312,10 +306,7 @@
                     <span>飲食分析 ▾</span>
                 </div>
 
-                <a href="#" class="menu-item" id="openHelpLink">
-                    <img src="@Url.Content("~/Image/helpicon.png")" alt="">
-                    <span>使用說明</span>
-                </a>
+
 
                 <div class="submenu">
                     <a href="@Url.Action("Analysis1Index", "Home")" class="submenu-item">
@@ -330,8 +321,11 @@
                         <img src="@Url.Content("~/Image/營養比例分析icon.png")" alt="">
                         <span>營養比例分析</span>
                     </a>
-
                 </div>
+                <a href="#" class="menu-item" id="openHelpLink">
+                    <img src="@Url.Content("~/Image/使用說明icon.png")" alt="">
+                    <span>使用說明</span>
+                </a>
             </div>
         </div>
     }
@@ -343,10 +337,10 @@
 
     <h6>版權所有，抄襲必究</h6>
 
-    @if (Session["LoginUser"] != null && Session["ImageName"] != null)
+    @if (Session["LoginUser"] != null)
     {
         <div class="profile-container">
-            <img src="@Url.Content("~/Photo/" + Session["ImageName"])" alt="會員照片" class="profile-pic" />
+            <img src="@Url.Content("~/Photo/" + (Session["ImageName"] ?? "default.jpg"))" alt="會員照片" class="profile-pic" />
             <div class="profile-tooltip">
                 <p><strong>@Session["LoginUser"]</strong></p>
                 <p><strong>@Session["RealName"]</strong></p>
@@ -405,7 +399,7 @@
             <p>可查看一週飲食統計、每日熱量趨勢及營養比例分析，了解個人飲食狀況。</p>
 
             <hr>
-            <p style="color:#555;">💡 提示：隨時可從上方導覽列返回首頁或登出。</p>
+            <p style="color:#555;">💡 提示：可從右上角頭像查看會員資料或登出。</p>
         </div>
     </div>
 </body>

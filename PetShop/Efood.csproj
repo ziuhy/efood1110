@@ -205,6 +205,7 @@
     <Content Include="Image\food.png" />
     <Content Include="Image\food2.png" />
     <Content Include="Image\一周飲食統計icon.png" />
+    <Content Include="Image\使用說明icon.png" />
     <Content Include="Image\每日熱量趨勢icon.png" />
     <Content Include="Image\營養比例分析icon.png" />
     <Content Include="Image\目標設定.png" />
