@@ -18,6 +18,9 @@
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 <style>
     html, body {
         margin: 0;
@@ -26,6 +29,41 @@
     .page-title {
         text-align: left; /* 水平靠左 */
         margin-left: 10px; /* 可選，與 page-wrapper 左側對齊 */
+    }
+
+    /* --- NEW: 2. 加入彈出框的 CSS 樣式 --- */
+
+    /* 讓 input 框空出右邊空間給圖示 */
+    #foodChipInput {
+        padding-right: 35px;
+    }
+
+    /* "i" 圖示的樣式 */
+    #info-icon {
+        
+        right: 12px;
+        top: 10px; 
+        cursor: pointer;
+        color: #7c6e6e;
+        z-index: 5; /* 確保在 input 之上，但在下拉選單之下 */
+    }
+
+    /* 彈出的小框框 */
+    .popup-box {
+        display: none; /* 預設隱藏 */
+        position: absolute;
+        top: 40px; /* 顯示在 input 框下方 */
+        right: 0;
+        width: 280px; /* 彈出框寬度 */
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        z-index: 1100; /* 必須在最上層 (比 1050 的下拉選單還高) */
+        font-size: 14px;
+        color: #333;
+        line-height: 1.5;
     }
 
     .page-wrapper {
@@ -93,7 +131,6 @@
 </div>
 
 <div class="page-wrapper">
-    <!-- 歷史日記顯示(左側) -->
     <div class="container mt-5" style="flex: 1 1 50%; max-width: 50%;">
         <form method="get" action="/Home/DiaryIndex" class="mb-3">
             <label for="searchDate">🔍 選擇日期查看紀錄：</label>
@@ -308,9 +345,7 @@
         </style>
 
     </div>
-    <!-- 日記輸入表單(右側) -->
     <div class="container mt-5 diary-form-wrapper">
-        <!-- 成功/失敗訊息 -->
         @if (TempData["Msg"] != null)
         {
             <div class="alert alert-info">@TempData["Msg"]</div>
@@ -342,12 +377,26 @@
 
                     <div class="chip-suggest-wrapper" style="position:relative;">
                         <input type="text" id="foodChipInput" class="form-control" placeholder="輸入食物名稱..." autocomplete="off" onkeyup="chipSuggest()" />
+
+                        <i id="info-icon" class="fas fa-info-circle"></i>
+
                         <div id="chipSuggestList" class="list-group chip-suggest-list" role="listbox" aria-label="建議清單"></div>
+
+                        <div id="info-popup" class="popup-box">
+                            <b>如何搜尋食物？</b><br />
+                            - 輸入關鍵字 (例如 "飯糰")。<br />
+                            - 從下拉選單中選擇現有食物。<br />
+                            - <b>新增食物：</b>如果找不到，直接輸入新名稱，
+                            然後點擊 "➕ 新增「...」" 選項，
+                            再到下方填寫營養素並儲存。
+                        </div>
                     </div>
 
                     <div id="foodChipList" style="margin-top:10px;"></div>
                     <input type="hidden" id="selectedFoods" name="CommonFood" />
                 </div>
+
+
                 <br />
 
                 <div id="nutritionInputs" class="mt-2">
@@ -779,8 +828,39 @@ allFoods.push({
             // 也綁 change（某些瀏覽器在 picker 完成時只觸發 change）
             dtInput.addEventListener('change', applyInferredMeal);
 
+            // --- NEW: 4. 加入彈出框的 JS 邏輯 ---
+            var icon = document.getElementById('info-icon');
+            var popup = document.getElementById('info-popup');
+
+            if (icon && popup) {
+                // 1. 點擊圖示：顯示/隱藏彈窗，並停止事件冒泡
+                icon.addEventListener('click', function (e) {
+                    e.stopPropagation(); // 防止觸發 window 的 click
+                    var isVisible = popup.style.display === 'block';
+                    popup.style.display = isVisible ? 'none' : 'block';
+                });
+
+                // 2. 點擊彈窗內部：不做任何事，並停止事件冒泡
+                //    (防止點擊彈窗時，觸發 window 的 click 而關閉)
+                popup.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+
+                // 3. 點擊網頁其他地方：隱藏彈窗
+                window.addEventListener('click', function (e) {
+                    // 確保彈窗存在且是顯示的
+                    if (popup && popup.style.display === 'block') {
+                        popup.style.display = 'none';
+                    }
+                });
+            }
+            // --- NEW JS END ---
+
             // 初始載入時套用一次（若尚未手動選）
             applyInferredMeal();
         });
     })();
+
+
+
 </script>
