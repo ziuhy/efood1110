@@ -121,7 +121,7 @@
             display: flex;
             align-items: center;
             padding: 10px 20px;
-            color: #fff;
+            color: #f0eeec;
             text-decoration: none;
             transition: background 0.2s;
         }
@@ -224,7 +224,7 @@
             right: -400px;
             width: 400px;
             height: 100%;
-            background-color: #fff;
+            background-color: #f0eeec;
             box-shadow: -2px 0 8px rgba(0,0,0,0.2);
             transition: right 0.4s ease;
             z-index: 2000;
@@ -242,19 +242,19 @@
             align-items: center;
             padding: 15px 20px;
             border-bottom: 1px solid #ddd;
-            background: #f9f9f9;
+            background: #7c6e6e;
         }
 
             .help-header h3 {
                 margin: 0;
-                color: #444;
+                color: #f0eeec;
             }
 
         .close-btn {
             background: none;
             border: none;
             font-size: 28px;
-            color: #888;
+            color: #f0eeec;
             cursor: pointer;
         }
 
@@ -385,21 +385,50 @@
     <!-- ===== 使用說明滑出欄 ===== -->
     <div id="helpSidebar" class="help-sidebar">
         <div class="help-header">
-            <h3>📘 E-食代 使用說明</h3>
+            <h3>E-食代 使用說明</h3>
             <button id="closeHelp" class="close-btn">&times;</button>
         </div>
         <div class="help-content">
-            <h4>🍱 飲食紀錄</h4>
-            <p>記錄每日飲食內容、用餐時間與營養成分，可依日期查詢。</p>
+            <h4>
+                <img src="~/Image/飲食紀錄icon.png" alt="飲食紀錄" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 5px;">
+                飲食紀錄
+            </h4>
+            <p>記錄每日飲食內容 📝、用餐時間 🕒 與詳細營養成分（熱量、蛋白質、脂肪、碳水化合物），並可依日期 📅 查詢歷史紀錄。</p>
+            <p>
+                <strong>操作提示：</strong>
+                點選單筆紀錄旁的 <button class="btn btn-sm">修改</button> 按鈕即可編輯；
+                點選 <button class="btn btn-sm">刪除</button> 按鈕即可移除。
+            </p>
 
-            <h4>🎯 目標設定</h4>
-            <p>設定目標體重與天數，系統會自動計算每日建議熱量與熱量差距。</p>
+            <h4>
+                <img src="~/Image/目標設定icon.png" alt="目標設定" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 5px;">
+                目標設定
+            </h4>
+            <p>設定您的目標體重 🏋️ 與天數 ⏳，系統將自動計算每日所需熱量、今日已攝取熱量與熱量差距。</p>
+            <p>本功能還包含「AI 營養師分析」🤖，可根據您的熱量差距「產生個人化飲食建議」並推薦補充食物。</p>
 
-            <h4>📊 飲食分析</h4>
-            <p>可查看一週飲食統計、每日熱量趨勢及營養比例分析，了解個人飲食狀況。</p>
+            <h4>
+                <img src="~/Image/飲食分析icon.png" alt="飲食分析" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 5px;">
+                飲食分析
+            </h4>
+            <p>透過多種圖表了解個人飲食狀況，包含：</p>
+            <ul>
+                <li>
+                    <img src="~/Image/一周飲食統計icon.png" alt="一週飲食統計" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                    <strong>一週飲食統計：</strong>查看本週平均熱量，以及早、午、晚餐的平均熱量。
+                </li>
+                <li>
+                    <img src="~/Image/每日熱量趨勢icon.png" alt="每日熱量趨勢" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                    <strong>每日熱量趨勢：</strong>透過折線圖追蹤一週內的每日總熱量變化。
+                </li>
+                <li>
+                    <img src="~/Image/營養比例分析icon.png" alt="營養比例分析" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                    <strong>營養比例分析：</strong>以圓餅圖顯示設定區間內的營養素攝取比例。
+                </li>
+            </ul>
 
             <hr>
-            <p style="color:#555;">💡 提示：可從右上角頭像查看會員資料或登出。</p>
+            <p style="color:#555;">💡 提示：可從右上角頭像 👤 查看會員資料或登出 🚪。</p>
         </div>
     </div>
 </body>
