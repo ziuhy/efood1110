@@ -261,6 +261,7 @@
     <Content Include="Views\Diary\Analysis2Area.cshtml" />
     <Content Include="Views\Diary\Analysis3Area.cshtml" />
     <Content Include="Views\Diary\ObjectiveArea.cshtml" />
+    <Content Include="secrets.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Photo\" />
