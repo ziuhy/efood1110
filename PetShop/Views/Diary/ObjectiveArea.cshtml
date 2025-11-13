@@ -60,19 +60,72 @@
         display: flex;
         justify-content: center;
     }
+
+    /* ↓↓↓ Modal CSS 樣式已加入 ↓↓↓ */
+    .modal-overlay {
+        display: none; /* 預設隱藏 */
+        position: fixed; /* 固定在畫面上，蓋住所有東西 */
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto; /* 如果視窗太小，允許滾動背景 */
+        background-color: rgba(0,0,0,0.5); /* 半透明黑色背景 */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto; /* 垂直 10% 邊距，水平自動置中 */
+        padding: 25px;
+        border: 1px solid #888;
+        width: 60%; /* 寬度 60% */
+        max-width: 700px; /* 最大寬度 700px */
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        position: relative;
+        animation: fadeIn 0.3s; /* 加入一點點淡入動畫 */
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+    }
+
+    .modal-close:hover,
+    .modal-close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    /* ↑↑↑ Modal CSS 樣式已加入 ↑↑↑ */
 </style>
 <div class="card">
     <img src="~/Image/目標設定icon.png" alt="目標設定icon" class="menu-icon">
     <h2 class="page-title"> 目標設定</h2>
 </div>
 
-<!-- 主內容區：兩欄式版面 -->
 <div style="display: flex; height: 70vh; width: 95%; margin: 0 auto; padding: 0; position: relative; z-index: 1;">
-    <!-- 左半部：基本資料 -->
     <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: flex-start; width: 30%; max-width: 33vw;">
         @*<h2 style="margin: 0 0 20px 0; align-self: flex-start;">目標設定</h2>*@
         <div style="width: 70%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: flex-start; position: relative; height: calc(100% - 60px); background-color: #fff;">
-            <!-- 標題與會員照片 -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3 style="margin: 0 auto; font-size: 20px;">基本資料</h3>
                 @if (Session["LoginUser"] != null && Session["ImageName"] != null)
@@ -83,7 +136,6 @@
                 }
             </div>
             <hr style="border: 1px solid #ccc; margin: 10px 0;" />
-            <!-- 顯示會員資訊 -->
             <div style="display: flex; flex-direction: column; align-items: flex-start; font-size: 20px;">
                 <div style="margin-bottom: 10px;">身高: @member.RegisterHeight cm</div>
                 <div style="margin-bottom: 10px;">體重: @member.RegisterWeight kg</div>
@@ -93,12 +145,9 @@
         </div>
     </div>
 
-    <!-- 中間間隔 -->
     @*<div style="width: 8%;"></div>*@
 
-    <!-- 右半部：目標設定與熱量分析 -->
     <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; width: 50%;">
-        <!-- 目標設定方框 -->
         <div style="width:260px; border: 2px solid #ccc; border-radius: 10px; padding: 20px; margin-bottom: 20px; height: calc(60% - 20px); background-color: #fff;">
             <h3 style="margin: 0 0 20px 0; font-size: 20px;">設定目標</h3>
             <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -117,7 +166,6 @@
             </div>
         </div>
         <div style="flex: 1; display: flex; flex-direction: row; gap: 5px; height: calc(40% - 20px); justify-content: center; ">
-            <!-- 每日所需熱量方框 -->
             <div style="width:110px ; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; background-color: #fff;">
                 <h3 style="margin: 0 0 10px 0; font-size: 15px;">每日所需熱量</h3>
                 <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
@@ -126,7 +174,6 @@
                 </div>
                 <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
             </div>
-            <!-- 每日飲食熱量方框 -->
             <div style="width:110px; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; background-color: #fff;">
                 <h3 style="margin: 0 0 10px 0; font-size: 15px;">今日飲食總熱量</h3>
                 <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
@@ -137,12 +184,10 @@
         </div>
     </div>
 
-    <!-- 中間間隔 -->
     @*<div style="width: 8%;"></div>*@
 
     <div style="width: 20%;">
 
-        <!-- 熱量差距方框 -->
         <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative;  background-color: #fff;">
             <h3 style="margin: 0 0 10px 0; font-size: 20px;">熱量差距</h3>
             <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
@@ -151,7 +196,6 @@
             <div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px; color: #666;">kcal</div>
         </div>
 
-        <!-- 推薦食物清單 -->
         <div style="width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 20px; position: relative; height: calc(40% - 20px); background-color: #fff;">
             @if (recommendFoods != null && recommendFoods.Count > 0)
             {
@@ -180,7 +224,7 @@
             }
         </div>
 
-        <div style="border: 2px solid #565b5e; border-radius: 10px; padding: 20px; background-color: #f8f9fa; width: 100%; height: calc(20% - 20px); ">
+        <div style="border: 2px solid #565b5e; border-radius: 10px; padding: 20px; background-color: #f8f9fa; width: 100%; height: calc(20% - 10px); ">
             <h3 style="margin: 0 0 10px 0; font-size: 20px;">🤖 AI 營養師分析</h3>
             <div style="text-align: center; margin-bottom: 15px;">
                 <button id="getAiAnalysisBtn" style="font-size: 16px; padding: 8px 16px; background-color: #565b5e; color: white; border: none; border-radius: 5px; cursor: pointer;">
@@ -190,17 +234,31 @@
             <div id="aiResultSpinner" style="display: none; text-align: center;">
                 <p>AI 營養師正在分析中，請稍候...</p>
             </div>
-            <div id="aiResultContainer" style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">
+
+            <div id="aiResultContainer" style="display: none;">
             </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript（處理更新目標按鈕） -->
+
+<div id="aiModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+
+        <h3 style="margin-top: 0;">🤖 AI 營養師分析結果</h3>
+        <hr>
+
+        <div id="aiModalBody" style="white-space: pre-wrap; max-height: 50vh; overflow-y: auto;">
+        </div>
+    </div>
+</div>
+
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
     $(document).ready(function () {
-        // 監聽更新目標按鈕
+        // 監聽更新目標按鈕 (您的原始程式碼，保持不變)
         $('#updateGoal').click(function () {
             var targetDays = $('#targetDays').val();
             var targetWeight = $('#targetWeight').val();
@@ -241,36 +299,65 @@
                 }
             });
         });
-    });
 
-    // 監聽 AI 分析按鈕的點擊事件
-$('#getAiAnalysisBtn').click(function () {
-    var btn = $(this);
-    var resultContainer = $('#aiResultContainer');
-    var spinner = $('#aiResultSpinner');
+        // ↓↓↓ 步驟三：AJAX 呼叫已修改 ↓↓↓
+        $('#getAiAnalysisBtn').click(function () {
+            var btn = $(this);
+            var spinner = $('#aiResultSpinner'); // 這是按鈕下方的讀取中...
 
-    btn.prop('disabled', true).text('分析中...');
-    spinner.show();
-    resultContainer.html('');
+            // *** 取得 Modal 的元素 ***
+            var modal = $('#aiModal');
+            var modalBody = $('#aiModalBody');
 
-    $.ajax({
-        url: '@Url.Action("GenerateAiAnalysis", "Home")',
-        type: 'POST',
-        success: function (response) {
-            if (response.success) {
-                resultContainer.text(response.analysis);
-            } else {
-                resultContainer.html('<p style="color: red;">分析失敗：' + response.message + '</p>');
+            btn.prop('disabled', true).text('分析中...');
+            spinner.show(); // 顯示按鈕下方的「分析中...」
+            modalBody.html(''); // 清空上一次的 Modal 內容
+
+            $.ajax({
+                url: '@Url.Action("GenerateAiAnalysis", "Home")',
+                type: 'POST',
+                success: function (response) {
+                    if (response.success) {
+                        // --- 這是修改的重點 ---
+                        // 1. 將分析結果填入 Modal 的內容區
+                        modalBody.text(response.analysis);
+                        // 2. 顯示 Modal
+                        modal.show();
+                        // --- 修改結束 ---
+                    } else {
+                        // 錯誤訊息也可以顯示在 Modal 中
+                        modalBody.html('<p style="color: red;">分析失敗：' + response.message + '</p>');
+                        modal.show();
+                    }
+                },
+                error: function () {
+                    // 錯誤訊息也可以顯示在 Modal 中
+                    modalBody.html('<p style="color: red;">無法連接到伺服器，請稍後再試。</p>');
+                    modal.show();
+                },
+                complete: function () {
+                    // 無論成功或失敗，都隱藏按鈕下方的讀取中...
+                    spinner.hide();
+                    btn.prop('disabled', false).text('重新產生飲食建議');
+                }
+            });
+        });
+
+        // ↓↓↓ 步驟四：「關閉 Modal」的 JavasScript 已加入 ↓↓↓
+
+        // 監聽 'x' 關閉按鈕
+        // 我們使用 $(document).on(...) 來確保即使是動態載入的元素也能綁定事件
+        $(document).on('click', '.modal-close', function() {
+            $('#aiModal').hide();
+        });
+
+        // 監聽點擊 Modal 以外的灰色區域
+        $(window).on('click', function(event) {
+            // 檢查點擊的對象是否就是那個灰色背景
+            if ($(event.target).is('#aiModal')) {
+                $('#aiModal').hide();
             }
-        },
-        error: function () {
-            resultContainer.html('<p style="color: red;">無法連接到伺服器，請稍後再試。</p>');
-        },
-        complete: function () {
-            spinner.hide();
-            btn.prop('disabled', false).text('重新產生飲食建議');
-        }
-    });
-});
+        });
 
+    }); // <-- 這是 $(document).ready 的結尾
 </script>
